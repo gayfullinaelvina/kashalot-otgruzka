@@ -1220,10 +1220,27 @@ function buildCaption(config) {
 
   if (snegsTotal > 0) {
     lines.push(`Всего кашалотов: ${snegsTotal}`);
-    snegTypes.forEach(({key, label}) => {
-      const total = snegs.filter(it => it.name.includes(key)).reduce((s, it) => s + it.qty, 0);
-      if (total > 0) lines.push(`${label}: ${total}`);
-    });
+    const modLabel = {'Зимний':'на зимнем модуле','Летний':'на летнем модуле','Пляжный':'на пляжном модуле'};
+    const getSnegLabel = it => {
+      const t = snegTypes.find(({key}) => it.name.includes(key));
+      return t ? t.label : it.name.replace(/\s*\(.*\)/,'').trim();
+    };
+    const getModule = it => Object.keys(modLabel).find(k => it.name.includes(k + ' модуль')) || '';
+    const uniqueMods = [...new Set(snegs.map(getModule))];
+    if (uniqueMods.length === 1 && uniqueMods[0]) {
+      lines.push(`На ${modLabel[uniqueMods[0]].replace('на ','')}`);
+      lines.push('');
+      snegTypes.forEach(({key, label}) => {
+        const total = snegs.filter(it => it.name.includes(key)).reduce((s, it) => s + it.qty, 0);
+        if (total > 0) lines.push(`${label}: ${total}`);
+      });
+    } else {
+      lines.push('');
+      snegs.forEach(it => {
+        const mod = getModule(it);
+        lines.push(`${getSnegLabel(it)}: ${it.qty}${mod ? ' ' + modLabel[mod] : ''}`);
+      });
+    }
     lines.push('');
   }
 
